@@ -1,0 +1,13 @@
+# Text is stored with LF in the repository; checkouts follow the local setting.
+* text=auto
+
+# Assets are byte-exact (their SHA-256 sums are recorded in assets/licenses/).
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.flac binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.otf binary

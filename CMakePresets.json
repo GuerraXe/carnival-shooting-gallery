@@ -1,0 +1,58 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": { "major": 3, "minor": 26, "patch": 0 },
+    "configurePresets": [
+        {
+            "name": "windows-msvc",
+            "displayName": "Windows (MSVC, VS 2022 Build Tools)",
+            "description": "Development tree (Debug + strict Release). Visual Studio generator, so MSVC is found without a Developer Command Prompt. If the SFML download is blocked (risk R-4), add -DFETCHCONTENT_SOURCE_DIR_SFML=<extracted SFML source>.",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/windows-msvc"
+        },
+        {
+            "name": "windows-msvc-preview",
+            "inherits": "windows-msvc",
+            "displayName": "Windows preview distribution (D-033)",
+            "description": "Separate tree for the distributable preview: stand-ins allowed, '(Preview)' title, static MSVC runtime so no VC++ Redistributable is needed. The development tree is untouched.",
+            "binaryDir": "${sourceDir}/build/windows-msvc-preview",
+            "cacheVariables": {
+                "GALLERY_PREVIEW": "ON",
+                "SFML_USE_STATIC_STD_LIBS": "ON",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+            }
+        }
+    ],
+    "buildPresets": [
+        { "name": "debug",   "configurePreset": "windows-msvc", "configuration": "Debug" },
+        { "name": "release", "configurePreset": "windows-msvc", "configuration": "Release" },
+        { "name": "preview", "configurePreset": "windows-msvc-preview", "configuration": "Release" }
+    ],
+    "testPresets": [
+        { "name": "debug",   "configurePreset": "windows-msvc", "configuration": "Debug",   "output": { "outputOnFailure": true } },
+        { "name": "release", "configurePreset": "windows-msvc", "configuration": "Release", "output": { "outputOnFailure": true } },
+        { "name": "preview", "configurePreset": "windows-msvc-preview", "configuration": "Release", "output": { "outputOnFailure": true } }
+    ],
+    "packagePresets": [
+        {
+            "name": "preview",
+            "configurePreset": "windows-msvc-preview",
+            "configurations": [ "Release" ],
+            "generators": [ "ZIP" ],
+            "packageDirectory": "${sourceDir}/dist"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "preview",
+            "displayName": "Configure, build, test and package the preview distribution",
+            "steps": [
+                { "type": "configure", "name": "windows-msvc-preview" },
+                { "type": "build",     "name": "preview" },
+                { "type": "test",      "name": "preview" },
+                { "type": "package",   "name": "preview" }
+            ]
+        }
+    ]
+}
