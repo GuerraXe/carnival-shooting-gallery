@@ -1,22 +1,26 @@
 #pragma once
 
-// Layout stand-ins for MISSING photographic assets (Asset Guide §5.4).
+// The game's art (D-044): flat grey shapes, drawn in code.
 //
-// Policy, enforced here:
-//   - flat, neutral grey only: no texture, no gradient, no colour, no
-//     outline styling. A stand-in can never be mistaken for final art.
-//   - the slot's real size and rough silhouette, so composition, scale and
-//     occlusion can be judged.
-//   - no lettering on the game screen (D-035, owner request): the F3
-//     inspection overlay (Debug) and carnival.log list what is missing.
-// Nothing here is ever a substitute for a photograph; the instant the real
-// file is in assets/, the renderer draws it instead.
+// These began as layout stand-ins for photographs (D-026). The owner chose to
+// keep them as the final look, so they are now the source of every sprite:
+// tools/sprite_bake.cpp draws each one through this painter and saves it as a
+// PNG under assets/images/, and the game loads those files like any sprite.
+// The renderer also calls the painter directly if a file is missing (Debug
+// or --stand-ins), so the two always match.
+//
+// Style rules:
+//   - flat greys only; darker = farther, ducks lightest (Asset Guide §2.3).
+//     The one soft edge is the bulb glow, which is light, not paint.
+//   - each shape fills its slot's real size and rough silhouette.
+//   - lettering only on the header sign, in the display font.
+// Every function draws into a destination rectangle (or centre) in the
+// target's coordinates, so the same code paints the screen and a sprite file.
 
-#include "gallery/assets/AssetCatalog.hpp"
 #include "gallery/core/Geometry.hpp"
-#include "gallery/view/SceneLayout.hpp"
 
 #include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Transform.hpp>
@@ -25,9 +29,8 @@
 
 namespace shell::render {
 
-// Neutral greys by depth: far = dark, near = mid. Ducks are the lightest
-// value so the "ducks have the highest contrast" rule can be judged even in
-// the stand-in composition (Asset Guide §2.3).
+// Greys by depth: far = dark, near = mid. Ducks are the lightest value so they
+// have the highest contrast in the composition (Asset Guide §2.3).
 namespace standin {
 inline const sf::Color kSky{38, 38, 38};
 inline const sf::Color kMidground{58, 58, 58};
@@ -44,23 +47,50 @@ inline const sf::Color kRifle{50, 50, 50};
 inline const sf::Color kRifleWood{64, 64, 64};   // stock and forend, a shade off the metal
 inline const sf::Color kBoard{128, 128, 128};
 inline const sf::Color kMark{48, 48, 48};
+inline const sf::Color kPuff{150, 150, 150};
+inline const sf::Color kGlow{40, 40, 40};         // added on top of the scene (additive)
+inline const sf::Color kPennantA{128, 128, 128};
+inline const sf::Color kPennantB{108, 108, 108};
 inline const sf::Color kLabel{232, 232, 232};
 } // namespace standin
 
 class StandInPainter {
 public:
-    // Silhouettes.
-    void boothFrame(sf::RenderTarget& t) const;
-    void waveStrip(sf::RenderTarget& t, gallery::Rect r) const;
-    void counter(sf::RenderTarget& t, gallery::Rect r) const;
+    // Scenery.
+    void sky(sf::RenderTarget& t, gallery::Rect r) const;          // BG_FAR, slot kFarPlate
+    void midground(sf::RenderTarget& t, gallery::Rect r) const;    // BG_MID, slot kMidPlate
+    void backboard(sf::RenderTarget& t, gallery::Rect r) const;    // FG_BACKBOARD
+    void trackRail(sf::RenderTarget& t, gallery::Rect r) const;    // FG_TRACK_RAIL (tiles)
+    void boothFrame(sf::RenderTarget& t) const;                    // FG_BOOTH_FRAME, whole canvas
+    void waveStrip(sf::RenderTarget& t, gallery::Rect r) const;    // FG_WAVE_STRIP
+    void counter(sf::RenderTarget& t, gallery::Rect r) const;      // FG_COUNTER
+
+    // Decorations.
+    void bulb(sf::RenderTarget& t, gallery::Rect r) const;         // DEC_BULB_LIT, kBulbSize
+    void bulbGlow(sf::RenderTarget& t, gallery::Rect r) const;     // DEC_BULB_GLOW (additive)
+    void sign(sf::RenderTarget& t, gallery::Rect r, const sf::Font& font,
+              float pixelScale) const;                             // DEC_SIGN_HEADER
+    void bunting(sf::RenderTarget& t, gallery::Rect r) const;      // DEC_BUNTING
+
+    // Targets.
     void duck(sf::RenderTarget& t, gallery::Rect r, sf::Color fill,
               const sf::RenderStates& states = sf::RenderStates::Default) const;
-    // Rifle silhouette in the 900x500 spec frame, drawn through `toLogical`.
+
     // First-person rifle seen from behind (D-039), drawn in barrel coordinates:
     // toLogical(along, across) with along 0 = swivel, 1 = muzzle, across in
     // image units either side of the barrel line.
     using RifleMap = std::function<sf::Vector2f(float along, float across)>;
     void rifle(sf::RenderTarget& t, const RifleMap& toLogical) const;
+
+    // Interface boards (UI_SCORE_BOARD, UI_TIMER_BOARD, UI_PANEL).
+    void board(sf::RenderTarget& t, gallery::Rect r) const;
+    // Aiming reticle (UI_RETICLE): `size` across, `kick` 0..1 opens the ticks.
+    void reticle(sf::RenderTarget& t, gallery::Vec2 centre, float size, float kick,
+                 sf::Color light) const;
+
+    // Effects.
+    void missMark(sf::RenderTarget& t, gallery::Vec2 centre, float radius, float alpha) const;
+    void muzzlePuff(sf::RenderTarget& t, gallery::Rect r, float alpha) const;
 };
 
 } // namespace shell::render

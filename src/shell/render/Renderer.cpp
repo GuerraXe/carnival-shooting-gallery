@@ -343,22 +343,21 @@ void Renderer::drawPass(sf::RenderTarget& t, DrawPass pass) {
         if (const sf::Texture* tex = assets_.texture(AssetId::BgFar)) {
             drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), L::kFarPlate, Fit::Cover));
         } else {
-            fillRect(t, L::kFarPlate, standin::kSky);
+            standIn_.sky(t, L::kFarPlate);
         }
         break;
     case DrawPass::MidPlate:
         if (const sf::Texture* tex = assets_.texture(AssetId::BgMid)) {
             drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), L::kMidPlate, Fit::Cover));
         } else {
-            // Midway skyline: the plate is transparent above the tent line.
-            fillRect(t, {L::kMidPlate.x, 36.0f, L::kMidPlate.width, 1060.0f}, standin::kMidground);
+            standIn_.midground(t, L::kMidPlate);
         }
         break;
     case DrawPass::Backboard:
         if (const sf::Texture* tex = assets_.texture(AssetId::FgBackboard)) {
             drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), L::kBackboard, Fit::Cover));
         } else {
-            fillRect(t, L::kBackboard, standin::kBackboard);
+            standIn_.backboard(t, L::kBackboard);
         }
         break;
     case DrawPass::MissMarks:
@@ -388,9 +387,8 @@ void Renderer::drawPass(sf::RenderTarget& t, DrawPass pass) {
         drawBunting(t);
         break;
     case DrawPass::Sign:
-        // The painted header sign is drawn only when its photograph exists.
-        // A blank stand-in card there served no purpose and read as an empty
-        // box (D-042, owner request); the header beam shows instead.
+        // Drawn only when its sprite exists (D-042: no blank card; D-044:
+        // the baked sign carries the booth's name).
         if (const sf::Texture* tex = assets_.texture(AssetId::DecSignHeader)) {
             drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), L::kSignSlot, Fit::Contain));
         }
@@ -440,7 +438,7 @@ void Renderer::drawTrackRail(sf::RenderTarget& t) {
         sprite.setPosition({r.x, r.y});
         t.draw(sprite);
     } else {
-        fillRect(t, r, standin::kRail);
+        standIn_.trackRail(t, r);
     }
 }
 
@@ -466,8 +464,8 @@ void Renderer::drawDucks(sf::RenderTarget& t) {
             sprite.setColor(shade);
             t.draw(sprite, sf::RenderStates(shadow * xf));
         }
-        // D-035: decoys painted red, the power-up target gold. A tint over
-        // the photograph (or stand-in) until dedicated decoy/golden art exists.
+        // D-035: decoys painted red, the power-up target gold: a tint over
+        // the one duck sprite.
         switch (lane_->kind(i)) {
         case gallery::TargetKind::Duck: sprite.setColor(sf::Color::White); break;
         case gallery::TargetKind::Decoy: sprite.setColor(kDecoyTint); break;
@@ -543,7 +541,7 @@ void Renderer::drawBulbs(sf::RenderTarget& t) {
         // sag dims every bulb together). Steady with --no-flicker.
         const float g = flicker_ ? gallery::bulbGlow(i, time_) * lightLevel() : 1.0f;
         if (glow) {
-            // Real lens bloom photographed on black, added on top (Asset Guide §4.1).
+            // The soft halo sprite, added on top of the scene.
             const float d = L::kBulbGlowDiameter;
             const Rect gr{socket.x - d / 2.0f, socket.y + r.height * 0.6f - d / 2.0f, d, d};
             drawPlaced(t, *glow, gallery::placeImage(sizeOf(*glow), gr, Fit::Contain),
@@ -554,11 +552,7 @@ void Renderer::drawBulbs(sf::RenderTarget& t) {
             drawPlaced(t, *lit, gallery::placeImage(sizeOf(*lit), r, Fit::Contain),
                        sf::Color(v, v, v));
         } else {
-            fillRect(t, {socket.x - 5.0f, r.y, 10.0f, 9.0f}, standin::kFrame);   // socket
-            sf::CircleShape bulb(L::kBulbSize.width / 2.0f, 24);
-            bulb.setPosition({r.x, r.y + 8.0f});
-            bulb.setFillColor(standin::kBulb);
-            t.draw(bulb);
+            standIn_.bulb(t, r);
         }
     }
 }
@@ -591,11 +585,7 @@ void Renderer::drawMissMarks(sf::RenderTarget& t) {
             drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), r, Fit::Contain),
                        withAlpha(sf::Color::White, alpha));
         } else {
-            sf::CircleShape dot(6.0f * pop, 20);
-            dot.setOrigin({6.0f * pop, 6.0f * pop});
-            dot.setPosition(toSf(m.pos));
-            dot.setFillColor(withAlpha(standin::kMark, alpha));
-            t.draw(dot);
+            standIn_.missMark(t, m.pos, 6.0f * pop, alpha);
         }
     }
 }
@@ -627,13 +617,11 @@ void Renderer::drawMuzzlePuff(sf::RenderTarget& t) {
     const Vec2 c = effects_.puffPos() + Vec2{-18.0f * k, -26.0f * k};
     const Rect r{c.x - size / 2.0f, c.y - size / 2.0f, size, size};
     if (const sf::Texture* tex = assets_.texture(AssetId::OvMuzzlePuff)) {
+        // The sprite is a translucent grey disc (D-044), blended normally.
         drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), r, Fit::Contain),
-                   withAlpha(sf::Color::White, alpha), sf::BlendAdd);
+                   withAlpha(sf::Color::White, alpha));
     } else {
-        sf::CircleShape puff(size / 2.0f, 32);
-        puff.setPosition({r.x, r.y});
-        puff.setFillColor(withAlpha(sf::Color(150, 150, 150), 0.5f * alpha));
-        t.draw(puff);
+        standIn_.muzzlePuff(t, r, alpha);
     }
 }
 
@@ -647,7 +635,7 @@ void Renderer::drawBoard(sf::RenderTarget& t, AssetId id, Rect slot, const char*
     if (tex) {
         drawPlaced(t, *tex, p);
     } else {
-        fillRect(t, p.dest, standin::kBoard);
+        standIn_.board(t, p.dest);
     }
     // Lettering painted at runtime with the display font (Asset Guide §4.1),
     // from the shared theme so the boards match the screens.
@@ -675,7 +663,7 @@ void Renderer::drawTimerBoard(sf::RenderTarget& t) {
         lit = !low || std::fmod(clock->remaining(), 1.0) >= 0.5;
     }
     const Rect s = L::kTimerBoardSlot;
-    drawLamp(t, assets_, {s.x + s.width - 30.0f, s.y + 30.0f}, 18.0f, lit);
+    drawLamp(t, {s.x + s.width - 30.0f, s.y + 30.0f}, 18.0f, lit);
 }
 
 void Renderer::drawAmmo(sf::RenderTarget& t) {
@@ -751,31 +739,7 @@ void Renderer::drawCrosshair(sf::RenderTarget& t) {
                    mix(sf::Color::White, hitColour, flash));
         return;
     }
-    // TEMP functional reticle (UI_RETICLE missing; Q-2 pending). Light ring
-    // with a dark edge so it reads on both the backboard and the sky.
-    const sf::Color light = mix(sf::Color(232, 228, 218), hitColour, flash);
-    const sf::Color dark(20, 16, 12, 200);
-    sf::CircleShape ring(s * 0.34f, 48);
-    ring.setOrigin({s * 0.34f, s * 0.34f});
-    ring.setPosition(toSf(aim_));
-    ring.setFillColor(sf::Color::Transparent);
-    ring.setOutlineThickness(3.5f);
-    ring.setOutlineColor(dark);
-    t.draw(ring);
-    ring.setOutlineThickness(1.8f);
-    ring.setOutlineColor(light);
-    t.draw(ring);
-    const float gap = 7.0f + 7.0f * kick;
-    const float len = s * 0.5f;
-    const Rect ticks[4] = {{aim_.x - len, aim_.y - 1.0f, len - gap, 2.0f},
-                           {aim_.x + gap, aim_.y - 1.0f, len - gap, 2.0f},
-                           {aim_.x - 1.0f, aim_.y - len, 2.0f, len - gap},
-                           {aim_.x - 1.0f, aim_.y + gap, 2.0f, len - gap}};
-    for (const Rect& r : ticks) {
-        fillRect(t, {r.x - 0.8f, r.y - 0.8f, r.width + 1.6f, r.height + 1.6f}, dark);
-        fillRect(t, r, light);
-    }
-    fillRect(t, {aim_.x - 1.2f, aim_.y - 1.2f, 2.4f, 2.4f}, light);
+    standIn_.reticle(t, aim_, s, kick, mix(sf::Color(232, 228, 218), hitColour, flash));
 }
 
 std::string Renderer::shotSummary() const {
@@ -1006,7 +970,7 @@ void Renderer::drawInspectOverlay(sf::RenderTarget& t, const gallery::Viewport& 
                         info.dt * 1000.0, info.focused ? "focused" : "unfocused");
     text += std::format("\nAssets: {} loaded, {} missing{}\n", assets_.loadedCount(),
                         assets_.missing().size(),
-                        assets_.fontIsStandIn() ? "  (font: system TEMP)" : "");
+                        assets_.fontIsStandIn() ? "  (font: Windows system)" : "");
     std::size_t col = 0;
     for (const AssetId id : assets_.missing()) {
         text += std::format("{}{:<16}", col == 0 ? "  " : " ", gallery::assetEntry(id).key);

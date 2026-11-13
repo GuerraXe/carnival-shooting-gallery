@@ -39,11 +39,9 @@ void configurePhoto(sf::Texture& t, AssetId id) {
 // What the renderer does instead while an MVP asset is missing.
 const char* fallbackFor(AssetId id) {
     switch (id) {
-    case AssetId::FntDisplay: return "installed slab-serif system font (TEMP, local only, never shipped)";
-    case AssetId::UiReticle: return "TEMP functional reticle (Q-2 pending)";
+    case AssetId::FntDisplay: return "Windows system font Rockwell Bold (read at run time, never shipped)";
     case AssetId::OvGrain: return "film grain OFF (no procedural substitute, D-022)";
-    case AssetId::DecBulbGlow: return "no glow drawn (no synthetic gradient)";
-    case AssetId::UiPanel: return "labelled grey board behind the title/pause/results lettering";
+    case AssetId::DecBulbGlow: return "no glow drawn";
     default:
         break;
     }
@@ -51,7 +49,7 @@ const char* fallbackFor(AssetId id) {
     if (kind == AssetKind::Sound || kind == AssetKind::Stream) {
         return "silent (no synthesised substitute)";
     }
-    return "labelled grey layout stand-in";
+    return "the same grey shape, drawn in code";
 }
 
 } // namespace
@@ -149,10 +147,10 @@ AssetStore::AssetStore(const AssetPaths& paths, Logger& log, MissingAssetPolicy 
         throw StartupError(msg.str());
     }
 
-    // Display font fallback (TEMP, D-029): while FNT_DISPLAY is missing, use
-    // the closest installed relative of painted showcard lettering: a slab
-    // serif, then a book serif, then the M0 sans. These are read from the
-    // local Windows font folder at run time and never copied into assets/.
+    // Display font (D-029, kept by the owner in D-044): with no bundled
+    // FNT_DISPLAY, use the installed slab serif Rockwell Bold, then a book
+    // serif, then a sans. These are read from the local Windows font folder at
+    // run time and never copied into assets/.
     if (!font_) {
         for (const char* name : {"ROCKB.TTF", "georgiab.ttf", "segoeui.ttf"}) {
             const fs::path sys = platform::windowsFontPath(name);
@@ -160,8 +158,7 @@ AssetStore::AssetStore(const AssetPaths& paths, Logger& log, MissingAssetPolicy 
             if (fs::is_regular_file(sys) && f.openFromFile(sys)) {
                 font_.emplace(std::move(f));
                 fontIsStandIn_ = true;
-                log.warn("Display font stand-in: " + platform::toUtf8(sys) +
-                         " (TEMP until FNT_DISPLAY)");
+                log.info("Display font: " + platform::toUtf8(sys) + " (Windows system font)");
                 break;
             }
         }

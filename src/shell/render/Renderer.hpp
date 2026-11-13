@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gallery/assets/AssetCatalog.hpp"
 #include "gallery/core/Geometry.hpp"
 #include "gallery/core/Time.hpp"
 #include "gallery/view/SceneLayout.hpp"

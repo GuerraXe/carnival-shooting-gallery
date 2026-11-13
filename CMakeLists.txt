@@ -157,6 +157,19 @@ add_custom_command(TARGET carnival_gallery POST_BUILD
 add_executable(audio_prep EXCLUDE_FROM_ALL tools/audio_prep.cpp)
 target_link_libraries(audio_prep PRIVATE gallery_warnings SFML::Audio)
 
+# sprite_bake — development tool that saves the game's grey shapes
+# (src/shell/render/StandIn.cpp) as the sprite files under assets/images/
+# (D-044). Never shipped. Build and run with:
+#   cmake --build --preset debug --target sprite_bake
+#   .\build\windows-msvc\Debug\sprite_bake.exe assets
+add_executable(sprite_bake EXCLUDE_FROM_ALL
+    tools/sprite_bake.cpp
+    src/shell/render/DrawUtil.cpp
+    src/shell/render/StandIn.cpp
+    src/shell/render/Theme.cpp)
+target_include_directories(sprite_bake PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(sprite_bake PRIVATE gallery_logic gallery_warnings SFML::Graphics)
+
 # ---------------------------------------------------------------------------
 # Tests — logic library only, hand-rolled framework (D-017).
 # ---------------------------------------------------------------------------

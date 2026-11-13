@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Strategy defined. **Audio acquired 2026-11-11** (13 CC0 recordings, pending listening review, D-030); no images or fonts yet |
+| Status | **Images: superseded by D-044 (2026-11-13).** The owner kept the grey shapes as the final art; every image is now the project's own sprite (see the manifest). The photographic sourcing rules below no longer apply to images and are kept for the record. **Audio acquired 2026-11-11** (13 CC0 recordings, pending listening review, D-030). Font: the Windows system font Rockwell Bold, by owner decision |
 | Version | 0.1 |
 | Date | 2026-11-11 |
 | Inputs | [PROJECT_BRIEF.md](PROJECT_BRIEF.md) §7, [ARCHITECTURE.md](ARCHITECTURE.md) §3.4, [DECISIONS.md](DECISIONS.md) D-012, D-020 to D-023 |

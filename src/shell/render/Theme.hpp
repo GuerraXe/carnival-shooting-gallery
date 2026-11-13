@@ -26,11 +26,9 @@ inline const sf::Color kGold{204, 156, 58};           // mustard gold (accent)
 inline const sf::Color kShade{14, 9, 5};              // dimming wash behind a board (warm)
 inline constexpr float kShadeAlpha = 0.58f;
 
-// Indicator lamps. Without the bulb photograph these are flat grey discs
-// (stand-in policy, D-026): dark = off, near-white = lit. No glow is drawn.
+// Indicator lamps: flat grey discs, dark = off, near-white = lit. No glow.
 inline const sf::Color kLampOff{70, 66, 60};
 inline const sf::Color kLampOn{240, 236, 226};
-inline const sf::Color kLampPhotoOff{88, 72, 58};      // tint on DEC_BULB_LIT when off
 
 // Type scale (logical px). One display face throughout (FNT_DISPLAY).
 inline constexpr float kSizeNumeral = 72.0f;   // score and time numerals

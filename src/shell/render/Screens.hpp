@@ -25,7 +25,7 @@ namespace shell::render {
 
 // An indicator lamp: the DEC_BULB_LIT photograph tinted on/off, or, while it
 // is missing, a flat grey disc (dark = off, light = lit). Never a glow.
-void drawLamp(sf::RenderTarget& t, const AssetStore& assets, gallery::Vec2 centre, float diameter,
+void drawLamp(sf::RenderTarget& t, gallery::Vec2 centre, float diameter,
               bool lit);
 
 class ScreenRenderer {

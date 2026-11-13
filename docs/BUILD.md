@@ -81,11 +81,24 @@ build/windows-msvc/<Debug|Release>/
 | N | Background music on/off (only audible once the optional `MUS_CALLIOPE` recording is installed) |
 | Window close | Quit from any screen |
 
-## Missing assets: Debug vs Release (D-026)
+## Sprites: the grey-shape art (D-044)
 
-- **Debug:** runs with every missing MVP image drawn as a plain flat-grey layout shape (no lettering, D-035; F3 lists what is missing).
+Every image under `assets/images/` is generated from code. `src/shell/render/StandIn.cpp` draws each shape; `tools/sprite_bake.cpp` saves it as a PNG at the size the game uses. To change a sprite, edit its painter function, then rebuild and re-run the tool:
+
+```powershell
+& $cmake --build --preset debug --target sprite_bake
+.\build\windows-msvc\Debug\sprite_bake.exe assets                 # all 19 sprites
+.\build\windows-msvc\Debug\sprite_bake.exe assets FG_RIFLE        # just one (keys as in assets/ASSET_MANIFEST.md)
+.\build\windows-msvc\Debug\sprite_bake.exe assets --scale 2       # 2 px per logical unit: sharper on high-DPI screens, same on-screen size
+```
+
+The output is deterministic: re-running unchanged code writes byte-identical files. After a change, update that sprite's SHA-256 and size in `assets/ASSET_MANIFEST.md` and `assets/licenses/<KEY>.md`. The sign's lettering is rendered from the Windows font Rockwell Bold, so baking needs Windows.
+
+## Missing sprites: Debug vs Release (D-026, D-044)
+
+- **Debug:** if a sprite file is missing, the game draws the same shape in code (F3 lists what is missing).
 - **Release:** refuses to start (exit code 1, listing every missing asset) unless you pass `--stand-ins`.
-- **`ctest --preset release`:** the `asset_contract` test **fails** until every MVP asset is `READY` in `assets/ASSET_MANIFEST.md`. This is the D-023 release gate, working as intended.
+- **`ctest --preset release`:** the `asset_contract` test **fails** until every MVP asset is `READY` in `assets/ASSET_MANIFEST.md`. Since D-044 every image passes; only the ten MVP sounds, still `IN_PROGRESS` until their listening review, keep it failing. This is the D-023 release gate, working as intended.
 
 The Release exe uses the WIN32 subsystem. To get its exit code in PowerShell, start it with `Start-Process -Wait -PassThru`.
 

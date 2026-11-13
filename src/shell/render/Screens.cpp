@@ -1,5 +1,6 @@
 #include "shell/render/Screens.hpp"
 
+#include "gallery/view/SceneLayout.hpp"
 #include "shell/assets/AssetStore.hpp"
 #include "shell/render/DrawUtil.hpp"
 #include "shell/render/StandIn.hpp"
@@ -58,15 +59,9 @@ float smoothstep(float e0, float e1, float x) {
 
 } // namespace
 
-void drawLamp(sf::RenderTarget& t, const AssetStore& assets, Vec2 centre, float diameter, bool lit) {
-    if (const sf::Texture* tex = assets.texture(gallery::AssetId::DecBulbLit)) {
-        const Rect r{centre.x - diameter / 2.0f, centre.y - diameter * 0.65f, diameter,
-                     diameter * 1.3f};
-        drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), r, gallery::Fit::Contain),
-                   lit ? sf::Color::White : theme::kLampPhotoOff);
-        return;
-    }
-    // Stand-in: grey disc in a dark socket ring. Lit = light, off = dark.
+void drawLamp(sf::RenderTarget& t, Vec2 centre, float diameter, bool lit) {
+    // Indicator lamp: grey disc in a dark ring. Lit = light, off = dark. Always
+    // drawn in code: it is a small signal, not the booth's bulb sprite (D-044).
     const float r = diameter / 2.0f;
     sf::CircleShape disc(r, 28);
     disc.setOrigin({r, r});
@@ -104,8 +99,7 @@ void ScreenRenderer::drawBoard(sf::RenderTarget& t) const {
         drawPlaced(t, *tex, gallery::placeImage(sizeOf(*tex), kPanel, gallery::Fit::Contain));
         return;
     }
-    // D-026 stand-in: flat grey card, named, so it is never taken for art.
-    fillRect(t, kPanel, standin::kBoard);
+    StandInPainter{}.board(t, kPanel);
 }
 
 void ScreenRenderer::drawHeading(sf::RenderTarget& t, const char* caption, const char* title,
@@ -241,7 +235,7 @@ void ScreenRenderer::drawPlacards(sf::RenderTarget& t, const gallery::Game& game
             outline(t, r, theme::kInk, 2.0f);
         }
         const sf::Color ink = on ? theme::kCream : theme::kInk;
-        drawLamp(t, assets_, {r.x + 28.0f, r.y + r.height / 2.0f}, 16.0f, on);
+        drawLamp(t, {r.x + 28.0f, r.y + r.height / 2.0f}, 16.0f, on);
         theme::letter(t, f, b.label, theme::kSizeRow, {r.x + r.width / 2.0f + 6.0f,
                                                        r.y + (r.height - theme::kSizeRow * 0.74f) / 2.0f},
                       Align::Centre, ink, pixelScale);

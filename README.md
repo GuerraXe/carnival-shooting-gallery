@@ -2,7 +2,7 @@
 
 A first-person, single-player shooting gallery set at an old-fashioned carnival. You stand behind a wooden booth counter and shoot at mechanical duck targets moving along a track. A round lasts 60 seconds: each hit scores 10, and the results board shows your score, accuracy and best score for the session.
 
-**Version 0.1.0-preview.** This is a preview. The game is fully playable, but none of the photographs it is designed around exist yet, so every image (booth, ducks, rifle, signs, boards) is drawn as a plain grey placeholder shape. The sound effects and ambience are real recordings. See [Known limitations](#known-limitations).
+**Version 0.1.0-preview.** The game is fully playable. Its look is flat grey shapes: the booth, ducks, rifle, sign, bunting and boards are the project's own art, saved as sprite files (decision D-044). The sound effects and ambience are real recordings. It is still labelled a preview because the sounds haven't had their listening review; see [Known limitations](#known-limitations).
 
 Written in C++20 with [SFML 3.0.2](https://www.sfml-dev.org/).
 
@@ -64,7 +64,7 @@ The `build\` folder also contains files named `CarnivalShootingGallery.exe`. The
 | `dist\CarnivalShootingGallery-0.1.0-preview-win64.zip` | The same as `game\`, zipped, for sharing or for another PC (Option A) |
 | `build\windows-msvc-preview\Release\…exe` | The preview build output that `game\` is copied from |
 | `build\windows-msvc\Debug\…exe` | Development build: a console window with live logs opens beside the game |
-| `build\windows-msvc\Release\…exe` | Strict release build. It **refuses to start** until every required photograph exists (decision D-023) |
+| `build\windows-msvc\Release\…exe` | Strict release build: no "(Preview)" title. It refuses to start if a required sprite is missing (decision D-023) |
 
 Each exe needs the **`assets` folder that sits next to it**. If you copy an exe somewhere else on its own, the game stops at startup with "asset folder was not found". Copy the whole folder instead. The `game\`, `build\` and `dist\` folders are generated: they don't exist until you build, and they aren't stored in the repository.
 
@@ -152,9 +152,9 @@ $ctest = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7
 
 | Preset | Build tree | What it is |
 |---|---|---|
-| `windows-msvc` + `debug` | `build/windows-msvc/Debug/` | Development: console window with live logs, placeholders always allowed, CRT leak report |
-| `windows-msvc` + `release` | `build/windows-msvc/Release/` | Strict release: **refuses to start** until every required asset is finished (decision D-023). Its `ctest --preset release` asset check fails for the same reason |
-| `windows-msvc-preview` + `preview` | `build/windows-msvc-preview/Release/` | The distribution: optimized, placeholders allowed, "(Preview)" title, static C++ runtime |
+| `windows-msvc` + `debug` | `build/windows-msvc/Debug/` | Development: console window with live logs, CRT leak report; draws a shape in code if its sprite file is missing |
+| `windows-msvc` + `release` | `build/windows-msvc/Release/` | Strict release: refuses to start if a required sprite is missing (decision D-023). Its `ctest --preset release` asset check still fails until the sounds pass their listening review |
+| `windows-msvc-preview` + `preview` | `build/windows-msvc-preview/Release/` | The distribution: optimized, "(Preview)" title, static C++ runtime |
 
 The first build compiles SFML and its dependencies (a few minutes per tree). Every build copies `assets/` next to the exe, so each build folder can be launched directly.
 
@@ -183,6 +183,7 @@ Each run writes `carnival.log` next to the exe, overwriting the previous one. If
 ├── assets/                             runtime assets shipped with the game, plus ASSET_MANIFEST.md and licenses/
 ├── asset-src/                          originals and work files behind assets/ (not shipped)
 ├── tools/audio_prep.cpp                development tool that cuts the runtime sounds from the originals
+├── tools/sprite_bake.cpp               development tool that saves the grey shapes as the sprite files
 ├── docs/                               brief, architecture, decisions, asset guide, build guide, verification report
 ├── README.md, THIRD_PARTY_NOTICES.md
 ├── game/                               generated: the playable game (open game/CarnivalShootingGallery.exe)
@@ -191,7 +192,9 @@ Each run writes `carnival.log` next to the exe, overwriting the previous one. If
 
 ## Asset licensing and attribution
 
-**Images and fonts:** none are included yet. Every image in the game is a placeholder drawn by the code. The display lettering temporarily uses a font already installed with Windows (see below), and that font is not distributed with the game.
+**Images:** all 19 images under `assets/images/` are this project's own art: flat grey shapes drawn by `src/shell/render/StandIn.cpp` and saved as PNGs by `tools/sprite_bake.cpp` (decision D-044). They are covered by the same terms as the source code (below). Each has an evidence file in `assets/licenses/`.
+
+**Font:** the lettering uses Rockwell Bold, a font already installed with Windows (see below). The font file is not distributed with the game; the header sign sprite contains letter shapes rendered from it.
 
 **Sounds:** all 13 sounds are real recordings from [Freesound](https://freesound.org), released by their creators under **CC0 1.0** (public domain dedication; attribution not required). They were trimmed, faded, converted to mono where noted, and normalized. Credit:
 
@@ -219,10 +222,9 @@ Each sound has an evidence file in `assets/licenses/` with the retrieval date, t
 
 ## Known limitations
 
-- **Placeholder visuals.** All 19 required images (plus 8 optional ones) and the display font are missing. The game is designed around them and draws plain grey shapes in their place. That is why this is a preview build; the strict Release build will not start until they exist.
-- **System font dependency.** Until a licensed display font is added, menus and the score display use Rockwell Bold, falling back to Georgia Bold, then Segoe UI, from the Windows Fonts folder. These are the only files the game reads from outside its own folder. If none of them is installed, the game stops at startup with a message.
-- **Sounds pending review.** The sound clips were chosen by level and transient analysis and have not yet been approved by ear. In testing the game opened the real output device and played its cues, but nobody has listened to them yet. If no audio device is available, the game runs silently.
+- **System font dependency.** Menus and the score display use Rockwell Bold, falling back to Georgia Bold, then Segoe UI, from the Windows Fonts folder. These are the only files the game reads from outside its own folder. If none of them is installed, the game stops at startup with a message.
+- **Sounds pending review.** The sound clips were chosen by level and transient analysis and have not yet been approved by ear. In testing the game opened the real output device and played its cues, but nobody has listened to them yet. If no audio device is available, the game runs silently. This review is the only thing keeping the build labelled "preview".
 - **No music.** The optional band-organ track has not been installed; the N key has nothing to play.
 - **Windows only, one machine tested.** Built and run on a single Windows 11 x64 PC. Other Windows versions, other GPUs, Linux and macOS are untested. The platform layer is Windows-specific, so other operating systems would also need code changes.
-- **Performance not verified.** The 60 FPS target has not been measured cleanly with full-size images, because none exist yet.
+- **Performance not verified.** The 60 FPS target has not been measured in a clean, undisturbed run.
 - **Smaller issues** (from `docs/VERIFICATION_REPORT.md`): fire rate and shot timing are tied to frames (at 30 fps, holding the trigger fires every 267 ms instead of 250 ms); the score clack can sound just after a quick restart; the best score lasts only for the session; there is no icon, installer or settings screen.
